@@ -3,9 +3,10 @@ Group 20 – MAS project
 Voter Behaviour Change Based on the Information Source:
 Human–Human versus Human–Computer, and the Role of Misinformation
 
-Annotation convention (for Appendix 1):
+Annotation convention(for Appendix 1):
     # [Deffuant et al., 2000]  -> rule taken from the original bounded-confidence model
     # [Mesa]                   -> standard Mesa 3.x usage pattern (Mesa documentation)
+    # [NetworkX]               -> NetworkX implementation of the Watts–Strogatz (1998) small-world graph 
     # [OWN]                    -> our own contribution / design choice
 
 Build status:
@@ -70,7 +71,7 @@ class Params:
     # --- initial opinions (Step 11, extension, Teacher feedback point 1) ---
     initial_dist: str = "uniform"      # "uniform" (main experiment) or "bimodal" (extension)
     # PLACEHOLDER values: Role 4 chooses the final ones from the literature
-    bimodal_peaks: tuple = (0.35, 0.65)  # centre-left and centre-right peak
+    bimodal_peaks: tuple = (0.30, 0.70)  # centre-left and centre-right peak
     bimodal_sd: float = 0.1            # spread around each peak
 
     # --- voters (Step 3; computer trust from Step 5) ---
