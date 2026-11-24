@@ -1,4 +1,4 @@
-# Group 20: Voter Behviour Change Based on the Information Source
+# Group 20: Voter Behaviour Change Based on the Information Source
 
 Requires Python 3.12 or newer (tested with Python 3.13).
 
