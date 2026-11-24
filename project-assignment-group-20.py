@@ -3,10 +3,10 @@ Group 20 – MAS project
 Voter Behaviour Change Based on the Information Source:
 Human–Human versus Human–Computer, and the Role of Misinformation
 
-Annotation convention(for Appendix 1):
+Annotation convention (for Appendix 1):
     # [Deffuant et al., 2000]  -> rule taken from the original bounded-confidence model
     # [Mesa]                   -> standard Mesa 3.x usage pattern (Mesa documentation)
-    # [NetworkX]               -> NetworkX implementation of the Watts–Strogatz (1998) small-world graph 
+    # [NetworkX]               -> NetworkX implementation of the Watts–Strogatz (1998) small-world graph
     # [OWN]                    -> our own contribution / design choice
 
 Build status:
@@ -20,7 +20,7 @@ Build status:
     Step 8 – four parties + initial party         DONE
     Step 9 – data output (4 files)                DONE
     Step 10 – experiment runner (all CPU cores)   DONE
-    Step 11 – bimodal start switch                DONE (final peak values: Role 4)
+    Step 11 – bimodal start switch                DONE
 
 How to run:
     python project-assignment-group-20.py             full experiment -> results/
@@ -48,8 +48,6 @@ from mesa import Agent, Model
 # =============================================================================
 # Every number the model uses lives here. Nothing is hard-coded further down.
 # To run a different condition, make a copy with `replace(params, e=0.3)`.
-# Parameters marked "(later)" are not used yet; they are listed now so the
-# whole team can see the full design in one place.
 
 @dataclass(frozen=True)
 class Params:
@@ -70,7 +68,7 @@ class Params:
 
     # --- initial opinions (Step 11, extension, Teacher feedback point 1) ---
     initial_dist: str = "uniform"      # "uniform" (main experiment) or "bimodal" (extension)
-    # PLACEHOLDER values: Role 4 chooses the final ones from the literature
+    # values chosen from literature: [Getter's source]
     bimodal_peaks: tuple = (0.30, 0.70)  # centre-left and centre-right peak
     bimodal_sd: float = 0.1            # spread around each peak
 
@@ -940,7 +938,7 @@ def test_step11():
           f"share left {len(left) / len(xs):.2f}")
     # NOTE: whether there are fewer voters at the 0.5 party border than with a
     # uniform start depends on the chosen peaks/SD, not on the code: with
-    # peaks 0.35/0.65 and SD 0.1 there are MORE (the two curves overlap at 0.5).
+    # peaks 0.30/0.70 and SD 0.1 there are fewer (about 6% instead of 10%).
     print(f"Share of voters within 0.05 of: 0.5 -> {near_middle:.3f}, "
           f"peak {lo} -> {near_peak:.3f}  (uniform start: 0.100 everywhere)")
     assert xs.min() >= 0 and xs.max() <= 1

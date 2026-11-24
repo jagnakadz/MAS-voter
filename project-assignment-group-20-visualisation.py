@@ -1,11 +1,9 @@
 """
 Group 20 – MAS project: INTERACTIVE VISUALISATION of the voter model
 
-Run (from the project folder), either:
-    solara run project-assignment-group-20-visualisation.py      (browser page)
-or open project-assignment-group-20-visualisation.ipynb in Jupyter / VS Code and
-run all cells (the page appears inside the notebook, as in the practicals).
-You get sliders, Step / Play / Reset buttons, live charts and a command console.
+Run (from the project folder):
+    solara run project-assignment-group-20-visualisation.py
+A browser page opens in which you can change the settings and watch the model.
 
 This file only SHOWS the model. The model itself is imported unchanged from
 project-assignment-group-20.py, and the experiment results (results/) do not use
@@ -272,7 +270,7 @@ model_params = {
     "seed": {"type": "InputText", "value": 0, "label": "Random seed"},
 }
 
-# the same list is used by the notebook version (…-visualisation.ipynb)
+# all charts shown on the page
 COMPONENTS = [HowToRead,
               _component(draw_network),
               _component(draw_histogram),

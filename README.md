@@ -1,9 +1,21 @@
 # Group 20: Voter Behviour Change Based on the Information Source
 
-Tested with Python 3.13
+Requires Python 3.12 or newer (tested with Python 3.13).
 
-Install: pip install -r requirements.txt
-Run: python project-assignment-group-20.py
+```bash
+pip install -r requirements.txt                              # install
+python project-assignment-group-20.py test                   # run the tests
+python project-assignment-group-20.py                        # full experiment (25+ minutes)
+solara run project-assignment-group-20-visualisation.py      # interactive visualisation
+```
+
+Run everything from the main project folder. The full experiment overwrites the files in `results/`.
+
+## Folders
+
+- `results/`: experiment data
+- `results/analysis/`: analysis scripts (see the README there)
+- `verification/`: tests, reference model and sensitivity analysis
 
 ## Bimodal experiment
 
@@ -15,5 +27,5 @@ After installing the dependencies, run this command from the project folder:
 python project-assignment-group-20.py bimodal
 ```
 
-The experiment runs six conditions with 30 seeds each and saves the results to `results/bimodal/`. To compare party switching with the uniform start, use `results/bimodal/runs.csv` and `results/runs.csv`. Match runs by parameter values and seed.
+The experiment runs six conditions with 30 seeds each and saves the results to `results/bimodal/`. To compare party switching with the uniform start, use `results/bimodal/runs.csv` and `results/runs.csv`. Compare conditions by parameter values. Runs with the same seed are not paired between the two starts.
 
