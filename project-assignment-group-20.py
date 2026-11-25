@@ -241,7 +241,7 @@ def initial_opinion(model):
 
     "uniform": x_i ~ U(0, 1)                             [Deffuant et al., 2000]
     "bimodal": about half the voters start near each peak      [OWN] Step 11 extension
-               (centre-left / centre-right.)
+               (centre-left / centre-right).
                Each voter picks a peak at random, then x_i ~ N(peak, bimodal_sd).
                Values outside [0, 1] are redrawn (not clipped), so no voters
                pile up exactly at 0 or 1, even if a wider SD is chosen.
