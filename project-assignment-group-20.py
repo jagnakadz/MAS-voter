@@ -3,31 +3,34 @@ Group 20 – MAS project
 Voter Behaviour Change Based on the Information Source:
 Human–Human versus Human–Computer, and the Role of Misinformation
 
-Annotation convention (for Appendix 1):
+Annotation convention:
     # [Deffuant et al., 2000]  -> rule taken from the original bounded-confidence model
     # [Mesa]                   -> standard Mesa 3.x usage pattern (Mesa documentation)
     # [NetworkX]               -> NetworkX implementation of the Watts–Strogatz (1998) small-world graph
     # [OWN]                    -> our own contribution / design choice
-
-Build status:
-    Step 1 – parameter block                      DONE
-    Step 2 – plain Deffuant baseline (two-way)    DONE
-    Step 3 – small-world network, receiver-only   DONE
-    Step 4 – computer source (p, k)               DONE
-    Step 5 – dynamic computer trust               DONE
-    Step 6 – computer bias b                      DONE
-    Step 7 – noise sigma on human messages        DONE
-    Step 8 – four parties + initial party         DONE
-    Step 9 – data output (4 files)                DONE
-    Step 10 – experiment runner (all CPU cores)   DONE
-    Step 11 – bimodal start switch                DONE
+    # [Dietvorst et al., 2015] -> inspired the trust rule (the exact numbers are ours)
+    # [Maineri et al., 2021]   -> motivated the two peak positions of the bimodal start
+    Step 1–11                -> the order in which we built and tested the model
 
 How to run:
-    python project-assignment-group-20.py             full experiment -> results/
+    python project-assignment-group-20.py             full experiment (25+ minutes) -> results/
     python project-assignment-group-20.py quick       small fast check -> results/quick/
-    python project-assignment-group-20.py pilot       T = 1000 pilot to choose T -> results/pilot_T1000/
     python project-assignment-group-20.py bimodal     extension: bimodal start, subset -> results/bimodal/
     python project-assignment-group-20.py test        all verification tests
+
+References:
+    Deffuant, G., Neau, D., Amblard, F., & Weisbuch, G. (2000). Mixing beliefs among
+        interacting agents. Advances in Complex Systems, 3, 87–98.
+    Dietvorst, B. J., Simmons, J. P., & Massey, C. (2015). Algorithm aversion: People
+        erroneously avoid algorithms after seeing them err. Journal of Experimental
+        Psychology: General, 144(1), 114–126.
+    Maineri, A., Aizpurua, E., Fitzgerald, R., Lomazzi, V., & Luijkx, R. (2021). In harmony:
+        Exploring the feasibility of ex-post harmonisation of European Social Survey and
+        European Values Study items. ESRA Conference.
+    Watts, D. J., & Strogatz, S. H. (1998). Collective dynamics of 'small-world' networks.
+        Nature, 393, 440–442.
+    Mesa documentation: https://mesa.readthedocs.io
+    NetworkX documentation: https://networkx.org
 """
 
 import os
@@ -47,7 +50,6 @@ from mesa import Agent, Model
 # STEP 1 – ALL PARAMETERS IN ONE PLACE                                   [OWN]
 # =============================================================================
 # Every number the model uses lives here. Nothing is hard-coded further down.
-# To run a different condition, make a copy with `replace(params, e=0.3)`.
 
 @dataclass(frozen=True)
 class Params:
@@ -66,9 +68,10 @@ class Params:
     mean_degree: int = 6       # Watts–Strogatz: each voter linked to k nearest
     rewire_prob: float = 0.1   # Watts–Strogatz rewiring probability
 
-    # --- initial opinions (Step 11, extension, Teacher feedback point 1) ---
+    # --- initial opinions (Step 11, extension) ---
     initial_dist: str = "uniform"      # "uniform" (main experiment) or "bimodal" (extension)
-    # values chosen from literature: [Getter's source]
+    # peak positions: side peaks at 3 and 7 (of 0-10) in Norway [Maineri et al., 2021];
+    # two roughly equal groups without a centre peak, and SD 0.1, are our own choices [OWN]
     bimodal_peaks: tuple = (0.30, 0.70)  # centre-left and centre-right peak
     bimodal_sd: float = 0.1            # spread around each peak
 
@@ -237,8 +240,8 @@ def initial_opinion(model):
     """Starting opinion of one voter.
 
     "uniform": x_i ~ U(0, 1)                             [Deffuant et al., 2000]
-    "bimodal": half the voters start near each peak      [OWN] Step 11 extension
-               (centre-left / centre-right, Teacher feedback point 1).
+    "bimodal": about half the voters start near each peak      [OWN] Step 11 extension
+               (centre-left / centre-right.)
                Each voter picks a peak at random, then x_i ~ N(peak, bimodal_sd).
                Values outside [0, 1] are redrawn (not clipped), so no voters
                pile up exactly at 0 or 1, even if a wider SD is chosen.
@@ -256,7 +259,7 @@ def initial_opinion(model):
 
 
 class Voter(Agent):
-    """A voter in our extended model."""
+    """A voter in our extended model. [OWN, extends Deffuant et al., 2000]"""
 
     def __init__(self, model, node):
         super().__init__(model)                     # [Mesa]
@@ -273,12 +276,10 @@ class Voter(Agent):
         self.neighbours = []                        # filled in by the model
 
     def step(self):
-        """One action of this voter in a tick (steps 1–5 of the tick in our proposal)."""
+        """One action of this voter in one tick."""
         params = self.model.params
 
         # 1) choose the information source                             [OWN] Step 4
-        #    (the `params.p > 0` check means no random number is drawn when
-        #    p = 0, so p = 0 gives exactly the same run as Step 3)
         use_computer = params.p > 0 and self.model.random.random() < params.p
 
         # 2) get the message and the trust in its source               [OWN]
@@ -308,8 +309,6 @@ class Voter(Agent):
 
         The noise stands for imperfect communication (people do not state
         their opinion exactly). Clipped so the message stays in [0, 1].
-        (The `sigma > 0` check means no random number is drawn when sigma = 0,
-        so sigma = 0 gives exactly the same run as before Step 7.)
         """
         sigma = self.model.params.sigma
         if sigma > 0:
@@ -342,7 +341,7 @@ class Computer(Agent):
 
 
 class VoterModel(Model):
-    """Our extended model: network, computer source, trust, bias."""
+    """Our extended model: network, computer source, trust, bias, noise, parties. [OWN]"""
 
     def __init__(self, params: Params):
         super().__init__(rng=params.seed)           # [Mesa]
@@ -556,7 +555,6 @@ def run_experiment(base=PARAMS, exp=EXPERIMENT, processes=None):
     os.makedirs(exp.out_dir, exist_ok=True)
     runs.to_csv(os.path.join(exp.out_dir, "runs.csv"), index=False)
     ticks.to_csv(os.path.join(exp.out_dir, "ticks.csv"), index=False)
-    # voters is big (~585k rows): compressed; pandas reads it with pd.read_csv as usual
     voters.to_csv(os.path.join(exp.out_dir, "voters.csv.gz"), index=False)
     if examples:
         pd.concat(examples).sort_values(order + ["tick", "voter_id"]).to_csv(
@@ -597,7 +595,6 @@ def test_deffuant_clusters():
             for _ in range(params.T):
                 model.step()
             x = model.opinions()
-            # sanity check: opinions must stay inside [0, 1]
             assert x.min() >= 0 and x.max() <= 1
             counts.append(count_clusters(x, params.cluster_gap,
                                          params.min_cluster_size))
@@ -642,10 +639,8 @@ def test_step3():
 
     # 3) opinions stay in [0, 1] (checked every tick inside run())
     #    + clusters on small-world vs complete network.
-    #    Deffuant verification (proposal): p = 0, sigma = 0, complete network,
+    #    Deffuant verification: p = 0, sigma = 0, complete network,
     #    and s = 1 for everyone, so that s * tau_h = 0.5 = Deffuant's mu.
-    #    (Fix suggested by Role 2: with s ~ U(0.2, 1) the average step is
-    #    smaller than Deffuant's, so the comparison was not fair.)
     print(f"{'e':>5} | {'small-world clusters':<22} | complete network, s=1 (= Deffuant)")
     for e in (0.1, 0.2, 0.3):
         sw, cp = [], []
@@ -764,11 +759,11 @@ def test_step5():
 def test_step6():
     """Step 6 test: b = 0.15, p = 1 -> the bulk of opinions moves up. [OWN]
 
-    Note: we first planned to test the MEAN opinion, but the mean hardly moves.
+    Note: we test the median because the mean hardly moves.
     Voters on both sides of the biased message are pulled towards it, while
     voters far below it reject it and stay behind. So the majority moves up
     and a minority is left behind, and the average stays about the same.
-    The MEDIAN (the middle voter) shows the shift, so we test that.
+    The median (the middle voter) does show the shift.
     """
     print("\nStep 6 test – computer bias (p = 1, e = 0.2, seeds 0-4)")
     print(f"{'b':>5} | {'start median':>12} | {'end median':>10} | "
@@ -936,9 +931,6 @@ def test_step11():
     print(f"Bimodal start (10 seeds): left group mean {left.mean():.3f} "
           f"(peak {lo}), right group mean {right.mean():.3f} (peak {hi}), "
           f"share left {len(left) / len(xs):.2f}")
-    # NOTE: whether there are fewer voters at the 0.5 party border than with a
-    # uniform start depends on the chosen peaks/SD, not on the code: with
-    # peaks 0.30/0.70 and SD 0.1 there are fewer (about 6% instead of 10%).
     print(f"Share of voters within 0.05 of: 0.5 -> {near_middle:.3f}, "
           f"peak {lo} -> {near_peak:.3f}  (uniform start: 0.100 everywhere)")
     assert xs.min() >= 0 and xs.max() <= 1
@@ -978,13 +970,13 @@ if __name__ == "__main__":
                        replace(EXPERIMENT, seeds=(0, 1),
                                out_dir=os.path.join("results", "quick")))
     elif mode == "pilot":
-        # pilot to CHOOSE the run length T (Role 2's "settled" rule): full grid,
+        # pilot used to choose the run length T: full grid,
         # T = 1000, separate folder. Because seeds are identical, tick t of this
         # pilot equals tick t of a shorter run, so any T <= 1000 can be judged.
         run_experiment(replace(PARAMS, T=1000),
                        replace(EXPERIMENT, out_dir=os.path.join("results", "pilot_T1000")))
     elif mode == "bimodal":
-        # extension (Step 11): bimodal start on a SUBSET of the grid, as agreed:
+        # extension (Step 11): bimodal start on a SUBSET of the grid:
         # p = 0 (baseline) and p = 0.5; tau_c0 = 0.5; e = 0.2, 0.3; b = 0, 0.15
         # -> 2 + 1 x 1 x 2 x 2 = 6 conditions x 30 seeds = 180 runs
         run_experiment(replace(PARAMS, initial_dist="bimodal"),
